@@ -1,5 +1,7 @@
 class CalcController {
     constructor() {
+        this._lastOperator = '';
+        this._lastNumber = '';
         this._operation = [];
         this._locale = 'pt-BR'
         this._displayCalcEl = document.querySelector("#display");
@@ -17,6 +19,8 @@ class CalcController {
         setInterval( () => {
             this.setDisplayDateTime();
         }, 1000 );
+
+        this.setLastNumberToDisplay();
     }
     
     setDisplayDateTime() {
@@ -36,18 +40,114 @@ class CalcController {
 
     clearAll() {
         this._operation = [];
+        this.setLastNumberToDisplay();
     }
 
     clearEntry() {
         this._operation.pop();
+        this.setLastNumberToDisplay();
     }
 
     getLastOperation() {
         return this._operation[this._operation.length -1];
     }
 
-    addOperation(value) {
+    setLastOperation(value) {
+        this._operation[this._operation.length -1] = value;
+    }
+
+    isOperator(value) {
+        //Se o valor do index for maior que -1 significa que o valor existe no array
+        return (['+', '-', '*', '/', '%'].indexOf(value) > -1);
+    }
+
+    pushOperation(value) {
         this._operation.push(value);
+
+        if(this._operation.length > 3) {
+            this.calc();
+        }
+
+    }
+
+    getResult() {
+        return eval(this._operation.join(""));
+    }
+
+    calc() {
+
+        let last = '';
+
+        if(this._operation.length > 3) {
+            last = this._operation.pop();
+
+            let result = this.getResult();
+        }
+
+        let last = this._operation.pop();
+        let result = this.getResult();
+
+        if( last == '%' ) {
+            result = result / 100;
+            this._operation[result];
+        } else {
+            this._operation = [result, last];
+
+            if(last) {
+                this._operation.push(last);
+            }
+        }
+
+
+        this.setLastNumberToDisplay();
+    }
+
+    setLastNumberToDisplay() {
+        let lastNumber;
+        //estrutura for de trás pra frente, para procurar o último número inserido
+        for(let i = this._operation.length -1; i >= 0; i--) {
+            if(!this.isOperator(this._operation[i])) {
+                lastNumber = this._operation[i];
+                break;
+            }
+        }
+
+        if(!lastNumber) {
+            lastNumber = 0;
+        }
+
+        this.displayCalc = lastNumber;
+    }
+
+    addOperation(value) {
+
+        if( isNaN(this.getLastOperation()) ) {
+            //Entra aqui se for uma string
+            if( this.isOperator(value) ) {
+                //troca o operador
+                this.setLastOperation(value);
+
+            } else if( isNaN(value) ) {
+                
+            } else {
+                this.pushOperation(value);
+                this.setLastNumberToDisplay();
+            }
+
+        } else {
+            //Entra aqui se for um número
+
+            if(this.isOperator(value)) {
+                this.pushOperation(value);
+            } else {
+                let newValue = this.getLastOperation().toString() + value.toString();
+                this.setLastOperation(parseInt(newValue));
+
+                this.setLastNumberToDisplay();
+            }
+
+        }
+
         console.log(this._operation);
     }
 
@@ -64,23 +164,27 @@ class CalcController {
                 this.clearEntry();
                 break;    
             case 'soma':
-                this.clearEntry();
+                this.addOperation('+');
                 break;    
             case 'subtracao':
-                this.clearEntry();
+                this.addOperation('-');
                 break;    
             case 'divisao':
-                this.clearEntry();
+                this.addOperation('/');
                 break;    
             case 'multiplicacao':
-                this.clearEntry();
+                this.addOperation('*');
                 break;    
             case 'porcento':
-                this.clearEntry();
+                this.addOperation('%');
                 break;    
             case 'igual':
-                this.clearEntry();
+                this.calc();
                 break; 
+            case 'ponto':
+                
+                break;
+            case '0':
             case '1':
             case '2':
             case '3':
